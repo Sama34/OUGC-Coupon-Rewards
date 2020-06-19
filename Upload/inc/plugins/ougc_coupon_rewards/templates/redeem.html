@@ -1,0 +1,83 @@
+<html>
+	<head>
+		<title>{$mybb->settings['bbname']} - {$lang->newpoints} - {$lang->ougc_coupon_rewards_redeem_title}</title>
+		{$headerinclude}
+	</head>
+	<body>
+		{$header}
+		<table width="100%" border="0" align="center">
+			<tr>
+				<td valign="top" width="180">
+					<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+						<tr>
+							<td class="thead"><strong>{$lang->newpoints_menu}</strong></td>
+						</tr>
+						{$options}
+					</table>
+				</td>
+				<td valign="top">
+					{$errors}
+					<form action="{$mybb->settings['bburl']}/newpoints.php" method="post">
+						<input type="hidden" name="my_post_code" value="{$mybb->post_code}" />
+						<input type="hidden" name="action" value="coupons" />
+						<input type="hidden" name="do" value="exchange" />
+						<input type="hidden" name="confirm" value="1" />
+						<input type="hidden" name="code" value="{$coupon['code']}" />
+						<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+							<tr>
+								<td class="thead" colspan="2">
+									<strong>{$lang->ougc_coupon_rewards_redeem_title}</strong>
+								</td>
+							</tr>
+							<tr>
+								<td class="trow1" width="30%">
+									<strong>{$lang->ougc_coupon_rewards_title}:</strong>
+								</td>
+								<td class="trow1">
+									{$coupon['title']}
+								</td>
+							</tr>
+							<tr>
+								<td class="trow1">
+									<strong>{$lang->ougc_coupon_rewards_description}:</strong>
+								</td>
+								<td class="trow1">
+									{$coupon['description']}
+								</td>
+							</tr>
+							<tr>
+								<td class="trow1">
+									<strong>{$lang->ougc_coupon_rewards_code}:</strong>
+								</td>
+								<td class="trow1">
+									{$coupon['code']}
+								</td>
+							</tr>
+							<tr>
+								<td class="trow1">
+									<strong>{$lang->ougc_coupon_rewards_group}:</strong>
+								</td>
+								<td class="trow1">
+									{$group}<div class="smalltext">({$type})</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="trow1">
+									<strong>{$lang->ougc_coupon_rewards_points}:</strong>
+								</td>
+								<td class="trow1">
+									{$points}
+								</td>
+							</tr>
+						</table>
+						<br />
+						<div align="center">
+							<input type="submit" class="button" name="submit" value="{$lang->ougc_coupon_rewards_confirm}" />
+						</div>
+					</form>
+				</td>
+			</tr>
+		</table>
+		{$footer}
+	</body>
+</html>
