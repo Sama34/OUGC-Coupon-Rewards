@@ -29,20 +29,58 @@
 
 namespace OUGCCouponRewards\ForumHooks;
 
+function global_start()
+{
+	global $templatelist;
+
+	if(isset($templatelist))
+	{
+		$templatelist .= ',';
+	}
+	else
+	{
+		$templatelist = '';
+	}
+
+	$templatelist .= ',ougccouponrewards_form';
+
+	if(defined('THIS_SCRIPT'))
+	{
+		if(THIS_SCRIPT == 'newpoints.php')
+		{
+			$templatelist .= ',ougccouponrewards_menu, ougccouponrewards_row, ougccouponrewards_option, ougccouponrewards';
+		}
+	}
+}
+
 function newpoints_default_menu(&$menu)
 {
 	global $mybb, $lang, $templates;
 
-	\OUGCCouponRewards\Core\load_language();
-
 	if(is_member($mybb->settings['ougc_coupon_rewards_modgroups']))
 	{
+		\OUGCCouponRewards\Core\load_language();
+	
 		$i = $mybb->get_input('action') == 'coupons' ? '&raquo; ' : '';
 	
 		$menu[] = eval($templates->render('ougccouponrewards_menu'));
 	}
+}
 
-	$menu[] = eval($templates->render('ougccouponrewards_menu_form'));
+function pre_output_page(&$page)
+{
+	if(my_strpos($page, '<!--OUGC_COUPON_REWARDS_FORM-->') === false)
+	{
+		return;
+	}
+
+	global $mybb, $lang, $templates, $theme, $gobutton;
+
+	\OUGCCouponRewards\Core\load_language();
+
+	$form = eval($templates->render('ougccouponrewards_form'));
+
+	$page = str_replace('<!--OUGC_COUPON_REWARDS_FORM-->', $form, $page);
 }
 
 function newpoints_start()

@@ -1,0 +1,17 @@
+<br class="clear" />
+<form action="{$mybb->settings['bburl']}/newpoints.php" method="post">
+	<input type="hidden" name="my_post_code" value="{$mybb->post_code}" />
+	<input type="hidden" name="action" value="coupons" />
+	<input type="hidden" name="do" value="exchange" />
+	<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+		<tr>
+			<td class="thead"><strong>{$lang->ougc_coupon_rewards_button}</strong></td>
+		</tr>
+		<tr>
+			<td class="trow1"><input type="text" name="code" class="textbox" size="15" placeholder="ABCEF0123456789" maxlength="15" /></td>
+		</tr>
+		<tr>
+			<td class="tfoot"><input type="submit" name="submit" class="button" value="{$lang->ougc_coupon_rewards_button}" /></td>
+		</tr>
+	</table>
+</form>
