@@ -37,4 +37,5 @@ $l = [
 	'setting_ougc_coupon_rewards_modgroups_desc' => 'Select allowed groups to generate new codes.',
 	'setting_ougc_coupon_rewards_minimum' => 'Minimum Codes',
 	'setting_ougc_coupon_rewards_minimum_desc' => 'Select the minimum active codes that should be available for each category.',
+	'ougc_coupon_rewards_pluginlibrary' => 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.'
 ];

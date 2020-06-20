@@ -97,6 +97,13 @@ function newpoints_start()
 
 			$coupon['stock'] = (int)$coupon['stock'];
 
+			if($coupon['stock'] !== -1 && $coupon['stock'] < 1)
+			{
+				\OUGCCouponRewards\Core\update_outofstock();
+	
+				error($lang->ougc_coupon_rewards_error_code);
+			}
+
 			$stock = my_number_format($coupon['stock']);
 
 			$coupon['gid'] = (int)$coupon['gid'];
@@ -189,12 +196,7 @@ function newpoints_start()
 						'stock' => '`stock`-1'
 					], "cid='{$coupon['cid']}'", '', true);
 
-					$query = $db->simple_select('ougc_coupon_rewards_codes', 'cid', "stock='0'");
-
-					while($_cid = (int)$db->fetch_field($query, 'cid'))
-					{
-						$db->update_query('ougc_coupon_rewards_codes', ['active' => 0], "cid='{$_cid}'");
-					}
+					\OUGCCouponRewards\Core\update_outofstock();
 				}
 	
 				newpoints_log('ougc_coupon_rewards_logs', my_serialize([
@@ -266,6 +268,8 @@ function newpoints_start()
 
 	if($mybb->request_method == 'post')
 	{
+		\OUGCCouponRewards\Core\update_outofstock();
+
 		if($mybb->get_input('do', \MyBB::INPUT_STRING) == 'update')
 		{
 			$cids = $mybb->get_input('coupons', \MyBB::INPUT_ARRAY);
@@ -291,6 +295,11 @@ function newpoints_start()
 
 				$errors[] = $lang->$lang_var;
 			}
+		}
+
+		if(!$mybb->get_input('unlimited_stock', \MyBB::INPUT_INT) && $mybb->get_input('stock', \MyBB::INPUT_INT) < 1)
+		{
+			$errors[] = $lang->ougc_coupon_rewards_error_stock;
 		}
 
 		$existing_code = false;

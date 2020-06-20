@@ -155,7 +155,14 @@ function generate_code(&$code)
 	{
 		$code .= substr('abcdefghijklmnopqrstuvwxyz0123456789', rand() % 33, 1);
     }
-} 
+}
+
+function update_outofstock()
+{
+	global $db;
+
+	$db->update_query('ougc_coupon_rewards_codes', ['active' => 0], "stock='0'");
+}
 
 // control_object by Zinga Burga from MyBBHacks ( mybbhacks.zingaburga.com ), 1.68
 function control_object(&$obj, $code) {
