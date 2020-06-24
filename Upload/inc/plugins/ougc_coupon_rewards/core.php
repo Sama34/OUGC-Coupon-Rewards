@@ -90,22 +90,6 @@ function addHooks(string $namespace)
     }
 }
 
-function update_cache(&$packages)
-{
-	global $mybb, $db;
-
-	$query = $db->simple_select('ougc_coupon_rewards_packages', '*', "active='1' AND points>'0'");
-
-	$packages = [];
-
-	while($package = $db->fetch_array($query))
-	{
-		$packages[(int)$package['cid']] = $package;
-	}
-
-	$mybb->cache->update('ougc_coupon_rewards_packages', $packages);
-}
-
 function generate_code(&$code)
 {
 	srand((double)microtime()*1000000);
