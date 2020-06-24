@@ -106,45 +106,6 @@ function update_cache(&$packages)
 	$mybb->cache->update('ougc_coupon_rewards_packages', $packages);
 }
 
-// Set url
-function set_url($url=null)
-{
-	static $current_url = '';
-
-	if(($url = trim($url)))
-	{
-		$current_url = $url;
-	}
-
-	return $current_url;
-}
-
-// Set url
-function get_url()
-{
-	return set_url();
-}
-
-// Build an url parameter
-function build_url($urlappend=[])
-{
-	global $PL;
-
-	if(!is_object($PL))
-	{
-		return get_url();
-	}
-
-	if($urlappend && !is_array($urlappend))
-	{
-		$urlappend = explode('=', $urlappend);
-
-		$urlappend = [$urlappend[0] => $urlappend[1]];
-	}
-
-	return $PL->url_append(get_url(), $urlappend, '&amp;', true);
-}
-
 function generate_code(&$code)
 {
 	srand((double)microtime()*1000000);
@@ -162,35 +123,4 @@ function update_outofstock()
 	global $db;
 
 	$db->update_query('ougc_coupon_rewards_codes', ['active' => 0], "stock='0'");
-}
-
-// control_object by Zinga Burga from MyBBHacks ( mybbhacks.zingaburga.com ), 1.68
-function control_object(&$obj, $code) {
-	static $cnt = 0;
-	$newname = '_objcont_'.(++$cnt);
-	$objserial = serialize($obj);
-	$classname = get_class($obj);
-	$checkstr = 'O:'.strlen($classname).':"'.$classname.'":';
-	$checkstr_len = strlen($checkstr);
-	if(substr($objserial, 0, $checkstr_len) == $checkstr) {
-		$vars = array();
-		// grab resources/object etc, stripping scope info from keys
-		foreach((array)$obj as $k => $v) {
-			if($p = strrpos($k, "\0"))
-				$k = substr($k, $p+1);
-			$vars[$k] = $v;
-		}
-		if(!empty($vars))
-			$code .= '
-				function ___setvars(&$a) {
-					foreach($a as $k => &$v)
-						$this->$k = $v;
-				}
-			';
-		eval('class '.$newname.' extends '.$classname.' {'.$code.'}');
-		$obj = unserialize('O:'.strlen($newname).':"'.$newname.'":'.substr($objserial, $checkstr_len));
-		if(!empty($vars))
-			$obj->___setvars($vars);
-	}
-	// else not a valid object or PHP serialize has changed
 }

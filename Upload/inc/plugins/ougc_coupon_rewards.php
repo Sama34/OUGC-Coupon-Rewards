@@ -33,18 +33,6 @@ if(!defined('IN_MYBB'))
 	die('This file cannot be accessed directly.');
 }
 
-if(defined('THIS_SCRIPT') && THIS_SCRIPT == 'newpoints.php')
-{
-	global $templatelist;
-
-	if(!isset($templatelist))
-	{
-		$templatelist = '';
-	}
-
-	$templatelist .= ',';
-}
-
 define('OUGC_COUPON_REWARDS_ROOT', MYBB_ROOT . 'inc/plugins/ougc_coupon_rewards');
 
 require_once OUGC_COUPON_REWARDS_ROOT.'/core.php';
@@ -53,10 +41,6 @@ require_once OUGC_COUPON_REWARDS_ROOT.'/core.php';
 if(defined('IN_ADMINCP'))
 {
 	require_once OUGC_COUPON_REWARDS_ROOT.'/admin.php';
-
-	require_once OUGC_COUPON_REWARDS_ROOT.'/admin_hooks.php';
-
-	\OUGCCouponRewards\Core\addHooks('OUGCCouponRewards\AdminHooks');
 }
 else
 {

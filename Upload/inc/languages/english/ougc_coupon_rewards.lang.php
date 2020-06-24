@@ -29,7 +29,6 @@
 
 $l = [
 	'setting_group_ougc_coupon_rewards' => 'OUGC Coupon Rewards',
-	'ougc_coupon_rewards' => '',
 	'ougc_coupon_rewards_menu' => 'Redeem Coupons',
 	'ougc_coupon_rewards_button' => 'Redeem Coupon',
 	'ougc_coupon_rewards_add' => 'Add Coupon',
