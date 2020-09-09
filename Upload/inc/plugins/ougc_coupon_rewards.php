@@ -49,6 +49,9 @@ else
 	\OUGCCouponRewards\Core\addHooks('OUGCCouponRewards\ForumHooks');
 }
 
+// PLUGINLIBRARY
+defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT.'inc/plugins/pluginlibrary.php');
+
 // Plugin API
 function ougc_coupon_rewards_info()
 {

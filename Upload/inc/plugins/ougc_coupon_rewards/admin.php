@@ -112,9 +112,9 @@ newpoints={$lang->setting_ougc_coupon_rewards_plugin_newpoints}",
 
 	$_info = \OUGCCouponRewards\Admin\_info();
 
-	if(!isset($plugins['pointsactivityrewards']))
+	if(!isset($plugins['couponrewards']))
 	{
-		$plugins['pointsactivityrewards'] = $_info['versioncode'];
+		$plugins['couponrewards'] = $_info['versioncode'];
 	}
 
 	_db_verify_tables();
@@ -127,7 +127,7 @@ newpoints={$lang->setting_ougc_coupon_rewards_plugin_newpoints}",
 
 	/*~*~* RUN UPDATES END *~*~*/
 
-	$plugins['pointsactivityrewards'] = $_info['versioncode'];
+	$plugins['couponrewards'] = $_info['versioncode'];
 
 	$cache->update('ougc_plugins', $plugins);
 }
@@ -179,9 +179,9 @@ function _uninstall()
 	// Delete version from cache
 	$plugins = (array)$cache->read('ougc_plugins');
 
-	if(isset($plugins['pointsactivityrewards']))
+	if(isset($plugins['couponrewards']))
 	{
-		unset($plugins['pointsactivityrewards']);
+		unset($plugins['couponrewards']);
 	}
 
 	if(!empty($plugins))
