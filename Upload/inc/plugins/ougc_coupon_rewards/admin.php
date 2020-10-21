@@ -72,7 +72,25 @@ newpoints={$lang->setting_ougc_coupon_rewards_plugin_newpoints}",
 			'description' => $lang->setting_ougc_coupon_rewards_modgroups_desc,
 			'optionscode' => 'groupselect',
 			'value' =>	4,
-		]
+		],
+		'perpage' => [
+			'title' => $lang->setting_ougc_coupon_rewards_perpage,
+			'description' => $lang->setting_ougc_coupon_rewards_perpage_desc,
+			'optionscode' => 'numeric',
+			'value' =>	20,
+		],
+		'characters' => [
+			'title' => $lang->setting_ougc_coupon_rewards_characters,
+			'description' => $lang->setting_ougc_coupon_rewards_characters_desc,
+			'optionscode' => 'text',
+			'value' =>	'a-_bcdefghijklmnopqrstuvwxyz0123456789',
+		],
+		'length' => [
+			'title' => $lang->setting_ougc_coupon_rewards_length,
+			'description' => $lang->setting_ougc_coupon_rewards_length_desc,
+			'optionscode' => 'numeric',
+			'value' =>	20,
+		],
 	]);
 
 	// Add templates
@@ -206,7 +224,7 @@ function _db_tables()
 			'cid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
 			'title'			=> "varchar(150) NOT NULL DEFAULT ''",
 			'description'	=> "varchar(250) NOT NULL DEFAULT ''",
-			'code'			=> "varchar(15) NOT NULL DEFAULT ''",
+			'code'			=> "varchar(50) NOT NULL DEFAULT ''",
 			'stock'			=> "int NOT NULL DEFAULT '-1'",
 			'gid'			=> "int UNSIGNED NOT NULL DEFAULT '0'",
 			'type'			=> "int NOT NULL DEFAULT '1'",

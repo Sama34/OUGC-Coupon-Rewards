@@ -37,5 +37,12 @@ $l = [
 	'setting_ougc_coupon_rewards_modgroups_desc' => 'Select allowed groups to generate new codes.',
 	'setting_ougc_coupon_rewards_minimum' => 'Minimum Codes',
 	'setting_ougc_coupon_rewards_minimum_desc' => 'Select the minimum active codes that should be available for each category.',
+	'setting_ougc_coupon_rewards_perpage' => 'Per Page Pagination',
+	'setting_ougc_coupon_rewards_perpage_desc' => 'Maximum items to display per page.',
+	'setting_ougc_coupon_rewards_characters' => 'Random Code Characters',
+	'setting_ougc_coupon_rewards_characters_desc' => 'Input which characters to use for generating random codes. Do not change this unless you know what you are doing nor leave empty.',
+	'setting_ougc_coupon_rewards_length' => 'Random Code Length',
+	'setting_ougc_coupon_rewards_length_desc' => 'Input how many characters to use for generating random codes between <code>1</code> and <code>50</code>.',
+
 	'ougc_coupon_rewards_pluginlibrary' => 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.'
 ];

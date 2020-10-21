@@ -98,6 +98,17 @@
 									<input type="number" name="points" class="textbox" value="{$points}" min="0" max="99999" />
 								</td>
 							</tr>
+							<tr>
+								<td class="trow1">
+									<strong>{$lang->ougc_coupon_rewards_multiple}:</strong>
+									<div class="smalltext">
+										{$lang->ougc_coupon_rewards_multiple_desc}
+									</div>
+								</td>
+								<td class="trow1">
+									<input type="number" name="multiple" class="textbox" value="{$mybb->input['multiple']}" min="1" max="999">
+								</td>
+							</tr>
 						</table>
 						<br />
 						<div align="center">
@@ -105,7 +116,7 @@
 						</div>
 					</form>
 					<br />
-					<form action="{$mybb->settings['bburl']}/newpoints.php" method="post">
+					<form action="{$mybb->settings['bburl']}/newpoints.php" method="post" id="list_form">
 						<input type="hidden" name="my_post_code" value="{$mybb->post_code}" />
 						<input type="hidden" name="action" value="coupons" />
 						<input type="hidden" name="do" value="update" />
@@ -120,8 +131,8 @@
 							</tr>
 							<tr>
 								<td class="tcat" width="20%"><strong>{$lang->ougc_coupon_rewards_title}</strong></td>
-								<td class="tcat" width="30%"><strong>{$lang->ougc_coupon_rewards_description}</strong></td>
-								<td class="tcat" width="15%" align="center"><strong>{$lang->ougc_coupon_rewards_code}</strong></td>
+								<td class="tcat" width="25%"><strong>{$lang->ougc_coupon_rewards_description}</strong></td>
+								<td class="tcat" width="20%" align="center"><strong>{$lang->ougc_coupon_rewards_code}</strong></td>
 								<td class="tcat" width="10%" align="center"><strong>{$lang->ougc_coupon_rewards_stock}</strong></td>
 								<td class="tcat" width="15%" align="center"><strong>{$lang->ougc_coupon_rewards_group}</strong></td>
 								<td class="tcat" width="10%" align="center"><strong>{$lang->ougc_coupon_rewards_points}</strong></td>
@@ -129,14 +140,26 @@
 							</tr>
 							{$coupon_list}
 						</table>
+						{$multipage}
 						<br />
 						<div align="center">
 							<input type="submit" class="button" name="submit" value="{$lang->ougc_coupon_rewards_deactivate}" />
+							<input type="submit" class="button" name="list" value="{$lang->ougc_coupon_rewards_list_button}" id="list_button" onclick="list_coupons(); return false;" />
 						</div>
 					</form>
 				</td>
 			</tr>
 		</table>
+		<script>
+			function list_coupons()
+			{
+				var x = $("#list_form").serialize();
+
+				MyBB.popupWindow("/{$url}" + x.replace('update', 'list'));
+
+				return false;
+			}
+		</script>
 		{$footer}
 	</body>
 </html>
