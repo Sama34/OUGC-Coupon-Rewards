@@ -40,8 +40,6 @@ function load_pluginlibrary($return=false)
 {
 	global $PL, $lang;
 
-	$_info = \OUGCCouponRewards\Admin\_info();
-
 	if($file_exists = file_exists(PLUGINLIBRARY))
 	{
 		global $PL;
@@ -53,6 +51,8 @@ function load_pluginlibrary($return=false)
 	{
 		return;
 	}
+
+	$_info = \OUGCCouponRewards\Admin\_info();
 
 	if(!$file_exists || $PL->version < $_info['pl']['version'])
 	{
