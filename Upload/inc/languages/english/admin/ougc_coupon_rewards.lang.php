@@ -30,19 +30,22 @@
 $l = [
 	'setting_group_ougc_coupon_rewards' => 'OUGC Coupon Rewards',
 	'setting_group_ougc_coupon_rewards_desc' => 'Allow users to request points rewards in exchange of activity.',
+
 	'setting_ougc_coupon_rewards_plugin' => 'Plugin',
 	'setting_ougc_coupon_rewards_plugin_desc' => 'Select which points plugin you have installed in this forum.',
 	'setting_ougc_coupon_rewards_plugin_newpoints' => 'Newpoints',
 	'setting_ougc_coupon_rewards_modgroups' => 'Moderator Groups',
 	'setting_ougc_coupon_rewards_modgroups_desc' => 'Select allowed groups to generate new codes.',
-	'setting_ougc_coupon_rewards_minimum' => 'Minimum Codes',
-	'setting_ougc_coupon_rewards_minimum_desc' => 'Select the minimum active codes that should be available for each category.',
-	'setting_ougc_coupon_rewards_perpage' => 'Per Page Pagination',
-	'setting_ougc_coupon_rewards_perpage_desc' => 'Maximum items to display per page.',
-	'setting_ougc_coupon_rewards_characters' => 'Random Code Characters',
-	'setting_ougc_coupon_rewards_characters_desc' => 'Input which characters to use for generating random codes. Do not change this unless you know what you are doing nor leave empty.',
-	'setting_ougc_coupon_rewards_length' => 'Random Code Length',
-	'setting_ougc_coupon_rewards_length_desc' => 'Input how many characters to use for generating random codes between <code>1</code> and <code>50</code>.',
+	//'setting_ougc_coupon_rewards_minimum' => 'Minimum Codes',
+	//'setting_ougc_coupon_rewards_minimum_desc' => 'Select the minimum active codes that should be available for each category.',
+	'setting_ougc_coupon_rewards_allow_stock' => 'Allow Stock Assignment',
+	'setting_ougc_coupon_rewards_allow_stock_desc' => 'Allow a set amount to be assigned to codes. If disabled stock will be set to <code>1</code> for all coupons.',
+	'setting_ougc_coupon_rewards_allow_groups' => 'Allow Groups Assignment',
+	'setting_ougc_coupon_rewards_allow_groups_desc' => 'Allow codes to assign groups when redeemed.',
+	'setting_ougc_coupon_rewards_allow_points' => 'Allow Points Assignment',
+	'setting_ougc_coupon_rewards_allow_points_desc' => 'Allow codes to grant points when redeemed.',
+	'setting_ougc_coupon_rewards_allow_email' => 'Allow Email Assignment',
+	'setting_ougc_coupon_rewards_allow_email_desc' => 'Allow codes to require specific emails to be redeemed. The email will be checked againts the current user email.',
 
 	'ougc_coupon_rewards_pluginlibrary' => 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.'
 ];

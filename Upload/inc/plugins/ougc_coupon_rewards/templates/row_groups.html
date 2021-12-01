@@ -1,0 +1,19 @@
+<tr>
+	<td class="trow1">
+		<strong>{$lang->ougc_coupon_rewards_group}:</strong>
+	</td>
+	<td class="trow1">
+		<select name="gid">
+			<option value="">{$lang->ougc_coupon_rewards_group_none}</option>
+			{$groups}
+		</select>
+		<label>
+			<input type="radio" class="radio" name="type" value="1"{$type1} />
+			{$lang->ougc_coupon_rewards_type_primary}
+		</label>
+		<label>
+			<input type="radio" class="radio" name="type" value="2"{$type2} />
+			{$lang->ougc_coupon_rewards_type_secondary}
+		</label>
+	</td>
+</tr>

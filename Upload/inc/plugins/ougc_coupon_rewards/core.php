@@ -36,9 +36,13 @@ function load_language()
 	isset($lang->setting_group_ougc_coupon_rewards) || $lang->load('ougc_coupon_rewards');
 }
 
-function load_pluginlibrary($return=false)
+function load_pluginlibrary()
 {
 	global $PL, $lang;
+
+	\OUGCCouponRewards\Core\load_language();
+
+	$_info = \OUGCCouponRewards\Admin\_info();
 
 	if($file_exists = file_exists(PLUGINLIBRARY))
 	{
@@ -47,17 +51,8 @@ function load_pluginlibrary($return=false)
 		$PL or require_once PLUGINLIBRARY;
 	}
 
-	if($return)
-	{
-		return;
-	}
-
-	$_info = \OUGCCouponRewards\Admin\_info();
-
 	if(!$file_exists || $PL->version < $_info['pl']['version'])
 	{
-		\OUGCCouponRewards\Core\load_language();
-	
 		flash_message($lang->sprintf($lang->ougc_coupon_rewards_pluginlibrary, $_info['pl']['url'], $_info['pl']['version']), 'error');
 
 		admin_redirect('index.php?module=config-plugins');
@@ -97,21 +92,13 @@ function addHooks(string $namespace)
 
 function generate_code(&$code)
 {
-	global $mybb;
-
-	$characters = $mybb->settings['ougc_coupon_rewards_characters'] ?: 'a-_bcdefghijklmnopqrstuvwxyz0123456789';
-
-	$length = (int)$mybb->settings['ougc_coupon_rewards_length'];
-
-	$length = $length > 0 && $length < 50 ? $length : 50 ;
-
 	srand((double)microtime()*1000000);
 
     $code = '';
 
-	for($i=1; $i <= $length; ++$i)
+	for($i=1; $i <= 15; ++$i)
 	{
-		$code .= substr($characters, rand() % 33, 1);
+		$code .= substr('abcdefghijklmnopqrstuvwxyz0123456789', rand() % 33, 1);
     }
 }
 
@@ -122,43 +109,75 @@ function update_outofstock()
 	$db->update_query('ougc_coupon_rewards_codes', ['active' => 0], "stock='0'");
 }
 
-// Set url
-function set_url($url=null)
+function insertCode($data, $update=false, $cid=0)
 {
-	static $current_url = '';
+	global $db;
 
-	if(($url = trim($url)))
+	$insertData = [];
+
+	if(isset($data['title']))
 	{
-		$current_url = $url;
+		$insertData['title'] = $db->escape_string($data['title']);
 	}
 
-	return $current_url;
+	if(isset($data['description']))
+	{
+		$insertData['description'] = $db->escape_string($data['description']);
+	}
+
+	if(isset($data['code']))
+	{
+		$insertData['code'] = $db->escape_string($data['code']);
+	}
+
+	if(isset($data['stock']))
+	{
+		$insertData['stock'] = (int)$data['stock'];
+	}
+
+	if(isset($data['gid']))
+	{
+		$insertData['gid'] = (int)$data['gid'];
+	}
+
+	if(isset($data['type']))
+	{
+		$insertData['type'] = (int)$data['type'];
+	}
+
+	if(isset($data['points']))
+	{
+		$insertData['points'] = (float)$data['points'];
+	}
+
+	if(isset($data['email']))
+	{
+		$insertData['email'] = $db->escape_string($data['email']);
+	}
+
+	if(isset($data['active']))
+	{
+		$insertData['active'] = (int)$data['active'];
+	}
+
+	if(isset($data['dateline']))
+	{
+		$insertData['dateline'] = (int)$data['dateline'];
+	}
+
+	if($update)
+	{
+		$db->update_query('ougc_coupon_rewards_codes', $insertData, "cid='{$cid}'");
+
+		return true;
+	}
+	else
+	{
+		return $db->insert_query('ougc_coupon_rewards_codes', $insertData);
+	}
 }
 
-// Set url
-function get_url()
+function updateCode($data, $cid)
 {
-	return set_url();
-}
-
-// Build an url parameter
-function build_url($urlappend=[])
-{
-	global $PL;
-
-	\OUGCCouponRewards\Core\load_pluginlibrary(true);
-
-	if(!is_object($PL))
-	{
-		return get_url();
-	}
-
-	if($urlappend && !is_array($urlappend))
-	{
-		$urlappend = explode('=', $urlappend);
-
-		$urlappend = [$urlappend[0] => $urlappend[1]];
-	}
-
-	return $PL->url_append(get_url(), $urlappend, '&amp;', true);
+	return insertCode($data, true, $cid);
 }

@@ -42,14 +42,9 @@ function global_start()
 		$templatelist = '';
 	}
 
-	$templatelist .= ',ougccouponrewards_form';
-
-	if(defined('THIS_SCRIPT'))
+	if(in_array(constant('THIS_SCRIPT'), ['newpoints.php', 'modcp.php']))
 	{
-		if(THIS_SCRIPT == 'newpoints.php')
-		{
-			$templatelist .= ',ougccouponrewards_menu, ougccouponrewards_row, ougccouponrewards_option, ougccouponrewards, ougccouponrewards_list';
-		}
+		$templatelist .= ', ougccouponrewards_form, ougccouponrewards_menu, ougccouponrewards_row, ougccouponrewards_option, ougccouponrewards, ougccouponrewards_modcp_nav, ougccouponrewards_empty, ougccouponrewards_row_email';
 	}
 }
 
@@ -83,16 +78,251 @@ function pre_output_page(&$page)
 	$page = str_replace('<!--OUGC_COUPON_REWARDS_FORM-->', $form, $page);
 }
 
-function newpoints_start()
+function misc_start()
 {
-	global $mybb;
+	global $mybb, $db, $lang, $theme, $header, $templates, $headerinclude, $footer, $options, $cache;
 
-	if($mybb->get_input('action') != 'coupons')
+	if(
+		$mybb->get_input('action') != 'coupons' ||
+		$mybb->get_input('do', \MyBB::INPUT_STRING) != 'exchange' ||
+		$mybb->request_method != 'post'
+	)
 	{
 		return;
 	}
 
-	global $db, $lang, $theme, $header, $templates, $headerinclude, $footer, $options, $cache;
+	\OUGCCouponRewards\Core\load_language();
+
+	$mybb->user['uid'] = (int)$mybb->user['uid'];
+
+	if(!$mybb->user['uid'])
+	{
+		error_no_permission();
+	}
+
+	$usergroups = $cache->read('usergroups');
+
+	$navigation = '';
+
+	$modcp = !function_exists('newpoints_format_points');
+
+	add_breadcrumb($lang->ougc_coupon_rewards_page_title, 'misc.php?action=coupons');
+
+	$url = 'newpoints.php';
+
+	if($modcp)
+	{
+		$url = 'misc.php';
+
+		$page_title = $lang->ougc_coupon_rewards_page_title;
+	}
+	else
+	{
+		$page_title = "{$lang->newpoints} - {$lang->ougc_coupon_rewards_page_title}";
+	}
+
+	verify_post_check($mybb->get_input('my_post_code'));
+
+	$_code = $db->escape_string(my_strtolower($mybb->get_input('code', \MyBB::INPUT_STRING)));
+
+	$query = $db->simple_select('ougc_coupon_rewards_codes', '*', "code='{$_code}' AND active='1'");
+
+	if(!$db->num_rows($query))
+	{
+		error($lang->ougc_coupon_rewards_error_code);
+	}
+
+	$coupon = $db->fetch_array($query);
+
+	$coupon['cid'] = (int)$coupon['cid'];
+
+	$query = $db->simple_select(
+		'ougc_coupon_rewards_logs',
+		'lid',
+		"cid='{$coupon['cid']}' AND uid='{$mybb->user['uid']}'",
+		['limit' => 1]
+	);
+
+	if($db->num_rows($query))
+	{
+		error($lang->ougc_coupon_rewards_error_code);
+	}
+
+	$coupon['title'] = htmlspecialchars_uni($coupon['title']);
+
+	$coupon['description'] = htmlspecialchars_uni($coupon['description']);
+
+	$coupon['code'] = htmlspecialchars_uni($coupon['code']);
+
+	$coupon['stock'] = (int)$coupon['stock'];
+
+	if($coupon['stock'] !== -1 && $coupon['stock'] < 1)
+	{
+		\OUGCCouponRewards\Core\update_outofstock();
+
+		error($lang->ougc_coupon_rewards_error_code);
+	}
+
+	if($mybb->settings['ougc_coupon_rewards_allow_email'] && $coupon['email'])
+	{
+		if(my_strtolower(trim($mybb->user['email'])) != my_strtolower(trim($coupon['email'])))
+		{
+			error($lang->ougc_coupon_rewards_error_email);
+		}
+	}
+
+	$stock = my_number_format($coupon['stock']);
+
+	$coupon['gid'] = (int)$coupon['gid'];
+
+	$coupon['type'] = (int)$coupon['type'];
+
+	$type = $lang->ougc_coupon_rewards_group_none;
+
+	if(
+		$coupon['gid'] &&
+		!empty($usergroups[$coupon['gid']]) &&
+		!$usergroups[$coupon['gid']]['isbannedgroup'] &&
+		!$usergroups[$coupon['gid']]['cancp'] &&
+		!$usergroups[$coupon['gid']]['canmodcp']
+	)
+	{
+		$group = htmlspecialchars_uni($usergroups[$coupon['gid']]['title']);
+
+		$group = format_name($group, $coupon['gid']);
+
+		if($coupon['type'] === 1)
+		{
+			$type = $lang->ougc_coupon_rewards_type_primary;
+		}
+		elseif($coupon['type'] === 2)
+		{
+
+			$type = $lang->ougc_coupon_rewards_type_secondary;
+		}
+	}
+
+	// we are going to skip the group change if current user has access to the acp
+	if($mybb->settings['ougccouponrewards_redeem_row_groups'] && $coupon['gid'] && (!$mybb->usergroup['cancp'] || $coupon['type'] === 2))
+	{
+		if($coupon['type'] === 1)
+		{
+			$user = ['usergroup' => $mybb->user['usergroup'], 'additionalgroups' => ''];
+		}
+		elseif($coupon['type'] === 2)
+		{
+			$user = ['usergroup' => 0, 'additionalgroups' => $mybb->user['additionalgroups']];
+		}
+		if(!is_member($coupon['gid'], $user))
+		{
+			require_once MYBB_ROOT.'inc/datahandlers/user.php';
+
+			$userhandler = new \UserDataHandler('update');
+
+			$updated_user = [
+				'uid' => $mybb->user['uid']
+			];
+
+			if($coupon['type'] === 1)
+			{
+				$updated_user['usergroup'] = $coupon['gid'];
+			}
+			elseif($coupon['type'] === 2)
+			{
+				$adds = $coupon['gid'];
+
+				if($mybb->user['additionalgroups'])
+				{
+					$adds = $mybb->user['additionalgroups'].',';
+				}
+
+				$updated_user['additionalgroups'] = $adds;
+			}
+
+			$userhandler->set_data($updated_user);
+
+			if(!$userhandler->validate_user())
+			{
+				$errors = $userhandler->get_friendly_errors();
+			}
+		}
+	}
+
+	$coupon['points'] = (float)$coupon['points'];
+
+	if(empty($errors) && $mybb->get_input('confirm', \MyBB::INPUT_INT))
+	{
+		if($updated_user)
+		{
+			$userhandler->update_user();
+		}
+
+		if($coupon['stock'] !== -1)
+		{
+			$db->update_query('ougc_coupon_rewards_codes', [
+				'stock' => '`stock`-1'
+			], "cid='{$coupon['cid']}'", '', true);
+
+			\OUGCCouponRewards\Core\update_outofstock();
+		}
+
+		if($mybb->settings['ougccouponrewards_redeem_row_points'] && $coupon['points'] && !$modcp)
+		{
+			newpoints_log('ougc_coupon_rewards_logs', my_serialize([
+				'cid' => $coupon['cid']
+			]));
+
+			newpoints_addpoints($mybb->user['uid'], $coupon['points']);
+		}
+
+		$db->insert_query('ougc_coupon_rewards_logs', [
+			'cid' => $coupon['cid'],
+			'uid' => $mybb->user['uid'],
+			'dateline' => TIME_NOW
+		]);
+
+		if($modcp)
+		{
+			$url = '';
+		}
+
+		redirect("{$mybb->settings['bburl']}/{$url}", $lang->ougc_coupon_rewards_success_redeem);
+	}
+
+	if($errors)
+	{
+		$errors = inline_error($errors);
+	}
+
+	$points = 0;
+
+	if(!$modcp)
+	{
+		$points = newpoints_format_points($coupon['points']);
+	}
+
+	$groups_row = $points_row = '';
+
+	if($mybb->settings['ougccouponrewards_redeem_row_groups'])
+	{
+		$groups_row = eval($templates->render('ougccouponrewards_row_groups'));
+	}
+
+	if($mybb->settings['ougccouponrewards_redeem_row_points'])
+	{
+		$points_row = eval($templates->render('ougccouponrewards_row_points'));
+	}
+
+	$page = eval($templates->render('ougccouponrewards_redeem'));
+
+	output_page($page);
+
+	exit;
+}
+
+function newpoints_start($modcp=false)
+{
+	global $mybb, $db, $lang, $theme, $header, $templates, $headerinclude, $footer, $options, $cache;
 
 	\OUGCCouponRewards\Core\load_language();
 
@@ -100,175 +330,36 @@ function newpoints_start()
 
 	$usergroups = $cache->read('usergroups');
 
-	\OUGCCouponRewards\Core\set_url('newpoints.php?action=coupons');
+	global $modcp_nav;
 
-	$url = \OUGCCouponRewards\Core\build_url();
+	$url = 'newpoints.php';
 
-	if($mybb->request_method == 'post')
+	if($modcp && is_member($mybb->settings['ougc_coupon_rewards_modgroups']))
 	{
-		verify_post_check($mybb->get_input('my_post_code'));
+		$url = 'modcp.php';
 
-		if($mybb->get_input('do', \MyBB::INPUT_STRING) == 'exchange')
-		{
-			$_code = $db->escape_string(my_strtolower($mybb->get_input('code', \MyBB::INPUT_STRING)));
+		$nav = eval($templates->render('ougccouponrewards_modcp_nav'));
 
-			$query = $db->simple_select('ougc_coupon_rewards_codes', '*', "code='{$_code}' AND active='1'");
+		$modcp_nav = str_replace('<!--OUGC_COUPON_REWARDS-->', $nav, $modcp_nav);
 
-			if(!$db->num_rows($query))
-			{
-				error($lang->ougc_coupon_rewards_error_code);
-			}
+		$navigation = &$modcp_nav;
 
-			$coupon = $db->fetch_array($query);
+		$page_title = $lang->ougc_coupon_rewards_page_title;
 
-			$coupon['cid'] = (int)$coupon['cid'];
+		add_breadcrumb($lang->nav_modcp, 'modcp.php');
 
-			$query = $db->simple_select('ougc_coupon_rewards_logs', 'lid', "cid='{$coupon['cid']}' AND uid='{$mybb->user['uid']}'", ['limit' => 1]);
+		add_breadcrumb($page_title, 'modcp.php?action=reports');
+	}
+	else
+	{
+		$navigation = eval($templates->render('ougccouponrewards_navigation'));
 
-			if($db->num_rows($query))
-			{
-				error($lang->ougc_coupon_rewards_error_code);
-				//error($lang->ougc_coupon_rewards_error_repeated);
-			}
+		$page_title = "{$lang->newpoints} - {$lang->ougc_coupon_rewards_page_title}";
+	}
 
-			$coupon['title'] = htmlspecialchars_uni($coupon['title']);
-
-			$coupon['description'] = htmlspecialchars_uni($coupon['description']);
-
-			$coupon['code'] = htmlspecialchars_uni($coupon['code']);
-
-			$coupon['stock'] = (int)$coupon['stock'];
-
-			if($coupon['stock'] !== -1 && $coupon['stock'] < 1)
-			{
-				\OUGCCouponRewards\Core\update_outofstock();
-	
-				error($lang->ougc_coupon_rewards_error_code);
-			}
-
-			$stock = my_number_format($coupon['stock']);
-
-			$coupon['gid'] = (int)$coupon['gid'];
-
-			$coupon['type'] = (int)$coupon['type'];
-
-			$type = $lang->ougc_coupon_rewards_group_none;
-
-			if(
-				$coupon['gid'] &&
-				!empty($usergroups[$coupon['gid']]) &&
-				!$usergroups[$coupon['gid']]['isbannedgroup'] &&
-				!$usergroups[$coupon['gid']]['cancp'] &&
-				!$usergroups[$coupon['gid']]['canmodcp']
-			)
-			{
-				$group = htmlspecialchars_uni($usergroups[$coupon['gid']]['title']);
-
-				$group = format_name($group, $coupon['gid']);
-
-				if($coupon['type'] === 1)
-				{
-					$type = $lang->ougc_coupon_rewards_type_primary;
-				}
-				elseif($coupon['type'] === 2)
-				{
-
-					$type = $lang->ougc_coupon_rewards_type_secondary;
-				}
-			}
-
-			// we are going to skip the group change if current user has access to the acp
-			if($coupon['gid'] && (!$mybb->usergroup['cancp'] || $coupon['type'] === 2))
-			{
-				if($coupon['type'] === 1)
-				{
-					$user = ['usergroup' => $mybb->user['usergroup'], 'additionalgroups' => ''];
-				}
-				elseif($coupon['type'] === 2)
-				{
-					$user = ['usergroup' => 0, 'additionalgroups' => $mybb->user['additionalgroups']];
-				}
-				if(!is_member($coupon['gid'], $user))
-				{
-					require_once MYBB_ROOT.'inc/datahandlers/user.php';
-
-					$userhandler = new \UserDataHandler('update');
-
-					$updated_user = [
-						'uid' => $mybb->user['uid']
-					];
-
-					if($coupon['type'] === 1)
-					{
-						$updated_user['usergroup'] = $coupon['gid'];
-					}
-					elseif($coupon['type'] === 2)
-					{
-						$adds = $coupon['gid'];
-
-						if($mybb->user['additionalgroups'])
-						{
-							$adds = $mybb->user['additionalgroups'].',';
-						}
-
-						$updated_user['additionalgroups'] = $adds;
-					}
-	
-					$userhandler->set_data($updated_user);
-
-					if(!$userhandler->validate_user())
-					{
-						$errors = $userhandler->get_friendly_errors();
-					}
-				}
-			}
-
-			$coupon['points'] = (float)$coupon['points'];
-
-			if(empty($errors) && $mybb->get_input('confirm', \MyBB::INPUT_INT))
-			{
-				if($updated_user)
-				{
-					$userhandler->update_user();
-				}
-
-				if($coupon['stock'] !== -1)
-				{
-					$db->update_query('ougc_coupon_rewards_codes', [
-						'stock' => '`stock`-1'
-					], "cid='{$coupon['cid']}'", '', true);
-
-					\OUGCCouponRewards\Core\update_outofstock();
-				}
-	
-				newpoints_log('ougc_coupon_rewards_logs', my_serialize([
-					'cid' => $coupon['cid']
-				]));
-
-				newpoints_addpoints($mybb->user['uid'], $coupon['points']);
-
-				$db->insert_query('ougc_coupon_rewards_logs', [
-					'cid' => $coupon['cid'],
-					'uid' => $mybb->user['uid'],
-					'dateline' => TIME_NOW
-				]);
-
-				redirect($mybb->settings['bburl'].'/newpoints.php', $lang->ougc_coupon_rewards_success_redeem);
-			}
-
-			if($errors)
-			{
-				$errors = inline_error($errors);
-			}
-
-			$points = newpoints_format_points($coupon['points']);
-
-			$page = eval($templates->render('ougccouponrewards_redeem'));
-
-			output_page($page);
-
-			exit;
-		}
+	if($mybb->get_input('action') != 'coupons')
+	{
+		return;
 	}
 
 	if(!is_member($mybb->settings['ougc_coupon_rewards_modgroups']))
@@ -308,45 +399,6 @@ function newpoints_start()
 		}
 	}
 
-	if($mybb->request_method == 'get')
-	{
-		if($mybb->get_input('do', \MyBB::INPUT_STRING) == 'list')
-		{
-			$cids = $mybb->get_input('coupons', \MyBB::INPUT_ARRAY);
-
-			$cids = implode("','", array_map('intval', $cids));
-	
-			$query = $db->simple_select('ougc_coupon_rewards_codes', 'code', "cid IN ('{$cids}')");
-
-			$codes = [];
-
-			while($code = $db->fetch_array($query))
-			{
-				$codes[] = my_strtoupper(htmlspecialchars_uni($code['code']));
-			}
-
-			$code_list = implode("\n", $codes);
-
-			require_once MYBB_ROOT.'inc/class_parser.php';
-
-			$parser = new \postParser;
-
-			$code_list_parsed = $parser->parse_message("[code]{$code_list}[/code]", [
-				'allow_html' => 0,
-				'allow_mycode' => 1,
-				'allow_smilies' => 0,
-				'allow_imgcode' => 0,
-				'filter_badwords' => 0
-			]);
-
-			$modal = eval($templates->render('ougccouponrewards_list', 1, 0));
-	
-			echo $modal;
-	
-			exit;
-		}
-	}
-
 	if($mybb->request_method == 'post')
 	{
 		\OUGCCouponRewards\Core\update_outofstock();
@@ -355,25 +407,24 @@ function newpoints_start()
 		{
 			$cids = $mybb->get_input('coupons', \MyBB::INPUT_ARRAY);
 
-			$cids = implode("','", array_map('intval', $cids));
-	
-			newpoints_log('ougc_coupon_rewards_codes', my_serialize([
-				'cids' => $cids
-			]));
-	
-			$db->update_query('ougc_coupon_rewards_codes', ['active' => 0], "cid IN ('{$cids}')");
+			$cids = array_map('intval', $cids);
 
-			redirect($mybb->settings['bburl'].'/newpoints.php?action=coupons', $lang->ougc_coupon_rewards_success_update);
+			if(!$modcp)
+			{
+				newpoints_log('ougc_coupon_rewards_codes', my_serialize([
+					'cids' => implode(",", $cids)
+				]));
+			}
+
+			foreach($cids as $cid)
+			{
+				\OUGCCouponRewards\Core\updateCode(['active' => 0], $cid);
+			}
+
+			redirect("{$mybb->settings['bburl']}/{$url}?action=coupons", $lang->ougc_coupon_rewards_success_update);
 		}
 
 		$errors = [];
-
-		$generate_count = $mybb->get_input('multiple', \MyBB::INPUT_INT);
-
-		if($generate_count < 1)
-		{
-			$generate_count = 1;
-		}
 
 		foreach(['title', 'description'] as $key)
 		{
@@ -385,9 +436,20 @@ function newpoints_start()
 			}
 		}
 
-		if(!$mybb->get_input('unlimited_stock', \MyBB::INPUT_INT) && $mybb->get_input('stock', \MyBB::INPUT_INT) < 1)
+		if($mybb->settings['ougc_coupon_rewards_allow_stock'])
 		{
-			$errors[] = $lang->ougc_coupon_rewards_error_stock;
+			if(!$mybb->get_input('unlimited_stock', \MyBB::INPUT_INT) && $mybb->get_input('stock', \MyBB::INPUT_INT) < 1)
+			{
+				$errors[] = $lang->ougc_coupon_rewards_error_stock;
+			}
+		}
+
+		if($mybb->settings['ougc_coupon_rewards_allow_email'])
+		{
+			if(!validate_email_format(my_strtolower($mybb->get_input('email'))))
+			{
+				$errors[] = $lang->ougc_coupon_rewards_error_email;
+			}
 		}
 
 		$existing_code = false;
@@ -405,21 +467,40 @@ function newpoints_start()
 		}
 		else
 		{
-			$random_code = true;
+			$unique_code = false;
+
+			while($unique_code == false)
+			{
+				\OUGCCouponRewards\Core\generate_code($generated_code);
+
+				$_code = $db->escape_string(my_strtolower($generated_code));
+
+				$query = $db->simple_select('ougc_coupon_rewards_codes', 'cid', "code='{$_code}'");
+	
+				if(!($existing_code = $db->num_rows($query)))
+				{
+					$unique_code = true;
+				}
+			}
 		}
 
 		unset($_code);
 
-		if($gid = $mybb->get_input('gid', \MyBB::INPUT_INT))
+		$gid = 0;
+
+		if($mybb->settings['ougc_coupon_rewards_allow_groups'])
 		{
-			if(
-				empty($usergroups[$gid]) ||
-				$usergroups[$gid]['isbannedgroup'] ||
-				$usergroups[$gid]['cancp'] ||
-				$usergroups[$gid]['canmodcp']
-			)
+			if($gid = $mybb->get_input('gid', \MyBB::INPUT_INT))
 			{
-				$errors[] = $lang->ougc_coupon_rewards_error_group;
+				if(
+					empty($usergroups[$gid]) ||
+					$usergroups[$gid]['isbannedgroup'] ||
+					$usergroups[$gid]['cancp'] ||
+					$usergroups[$gid]['canmodcp']
+				)
+				{
+					$errors[] = $lang->ougc_coupon_rewards_error_group;
+				}
 			}
 		}
 
@@ -429,130 +510,74 @@ function newpoints_start()
 		}
 		else
 		{
-			$update_data = [
-				'title'			=> $db->escape_string($mybb->get_input('title', \MyBB::INPUT_STRING)),
-				'description'	=> $db->escape_string($mybb->get_input('description', \MyBB::INPUT_STRING)),
-				'code'			=> $db->escape_string($generated_code),
-				'stock'			=> $mybb->get_input('unlimited_stock', \MyBB::INPUT_INT) ? -1 : $mybb->get_input('stock', \MyBB::INPUT_INT),
-				'gid'			=> $gid,
-				'type'			=> $gid ? $mybb->get_input('type', \MyBB::INPUT_INT) : 0,
-				'points'		=> $mybb->get_input('points', \MyBB::INPUT_FLOAT),
+			$insertData = [
+				'title' => $mybb->get_input('title', \MyBB::INPUT_STRING),
+				'description' => $mybb->get_input('description', \MyBB::INPUT_STRING),
+				'code' => $generated_code,
+				'stock' => $mybb->get_input('unlimited_stock', \MyBB::INPUT_INT) ? -1 : $mybb->get_input('stock', \MyBB::INPUT_INT),
+				'gid' => $gid,
+				'type' => $gid ? $mybb->get_input('type', \MyBB::INPUT_INT) : 0,
+				'points' => $mybb->get_input('points', \MyBB::INPUT_FLOAT),
+				'email' => '',
+				'dateline' => TIME_NOW,
 			];
 
-			if(isset($random_code))
+			if(!$mybb->settings['ougc_coupon_rewards_allow_stock'])
 			{
-				while($generate_count)
-				{
-					$unique_code = false;
-		
-					while($unique_code == false)
-					{
-						\OUGCCouponRewards\Core\generate_code($generated_code);
-		
-						$_code = $db->escape_string(my_strtolower($generated_code));
-		
-						$query = $db->simple_select('ougc_coupon_rewards_codes', 'cid', "code='{$_code}'");
-			
-						if(!($existing_code = $db->num_rows($query)))
-						{
-							$unique_code = true;
-						}
-					}
-
-					$update_data['code'] = $db->escape_string($generated_code);
-	
-					$cid = $db->insert_query('ougc_coupon_rewards_codes', $update_data);
-
-					newpoints_log('ougc_coupon_rewards_codes', my_serialize([
-						'cid' => $cid
-					]));
-
-					--$generate_count;
-				}
+				$insertData['stock'] = 1;
 			}
-			else
-			{
-				$cid = $db->insert_query('ougc_coupon_rewards_codes', $update_data);
 
+			if($mybb->settings['ougc_coupon_rewards_allow_groups'])
+			{
+				$insertData['gid'] = 0;
+
+				$insertData['type'] = 0;
+			}
+
+			if($mybb->settings['ougc_coupon_rewards_allow_points'])
+			{
+				$insertData['points'] = 0;
+			}
+
+			if($mybb->settings['ougc_coupon_rewards_allow_email'])
+			{
+				$insertData['email'] = my_strtolower($mybb->get_input('email'));
+			}
+
+			$cid = \OUGCCouponRewards\Core\insertCode($insertData);
+
+			if(!$modcp)
+			{
 				newpoints_log('ougc_coupon_rewards_codes', my_serialize([
 					'cid' => $cid
 				]));
 			}
 
-			redirect($mybb->settings['bburl'].'/newpoints.php?action=coupons', $lang->ougc_coupon_rewards_success_add);
+			redirect("{$mybb->settings['bburl']}/{$url}?action=coupons", $lang->ougc_coupon_rewards_success_add);
 		}
 	}
 
-	$where = [];
+	$disabled = '';
+
+	$where = "active='1'";
 
 	if($mybb->get_input('unactive', \MyBB::INPUT_INT))
 	{
-		$where[] = "active='0'";
-	}
-	else
-	{
-		$where[] = "active='1'";	
+		$disabled = ' disabled="disabled"';
+
+		$where = "active='0'";
 	}
 
-	$where = implode(' AND ', $where);
-
-	$query = $db->simple_select('ougc_coupon_rewards_codes', 'COUNT(cid) AS total_codes', $where);
-	
-	$total_codes = $db->fetch_field($query, 'total_codes');
+	$query = $db->simple_select('ougc_coupon_rewards_codes', '*', $where);
 
 	$coupon_list = '';
 
-	if(!$total_codes)
+	if(!$db->num_rows($query))
 	{
 		$coupon_list = eval($templates->render('ougccouponrewards_empty'));
 	}
 	else
 	{
-		$perpage = (int)$mybb->settings['ougc_coupon_rewards_perpage'];
-
-		if(!$perpage)
-		{
-			$perpage = 10;
-		}
-	
-		$page = $mybb->get_input('page', \MyBB::INPUT_INT);
-
-		$pages = $total_codes / $perpage;
-
-		$pages = ceil($pages);
-	
-		if($page > $pages || $page <= 0)
-		{
-			$page = 1;
-		}
-	
-		if($page)
-		{
-			$start = ($page-1) * $perpage;
-		}
-		else
-		{
-			$start = 0;
-
-			$page = 1;
-		}
-
-		$multipage = (string)multipage($total_codes, $perpage, $page, \OUGCCouponRewards\Core\build_url());
-
-		$multipage = eval($templates->render('ougccouponrewards_content_multipage'));
-
-		$query = $db->simple_select(
-			'ougc_coupon_rewards_codes',
-			'*',
-			$where,
-			[
-				'limit' => $perpage,
-				'limit_start' => $start,
-				'order_by' => 'cid',
-				'order_dir' => 'desc'
-			]
-		);
-	
 		while($coupon = $db->fetch_array($query))
 		{
 			$trow = alt_trow();
@@ -565,8 +590,6 @@ function newpoints_start()
 
 			$coupon['code'] = htmlspecialchars_uni($coupon['code']);
 
-			$upper_code = my_strtoupper($coupon['code']);
-
 			$coupon['stock'] = (int)$coupon['stock'];
 
 			$coupon['stock'] = my_number_format($coupon['stock']);
@@ -574,6 +597,8 @@ function newpoints_start()
 			$coupon['gid'] = (int)$coupon['gid'];
 
 			$coupon['type'] = (int)$coupon['type'];
+
+			$coupon['email'] = htmlspecialchars_uni($coupon['email']);
 
 			$type = $lang->ougc_coupon_rewards_group_none;
 
@@ -591,27 +616,35 @@ function newpoints_start()
 
 				if($coupon['type'] === 1)
 				{
-
 					$type = $lang->ougc_coupon_rewards_type_primary;
 				}
 				elseif($coupon['type'] === 2)
 				{
-
 					$type = $lang->ougc_coupon_rewards_type_secondary;
 				}
 			}
 
 			$coupon['points'] = (float)$coupon['points'];
 
-			$coupon['points'] = newpoints_format_points($coupon['points']);
+			$coupon['points'] = 0;
+
+			if(!$modcp)
+			{
+				$coupon['points'] = newpoints_format_points($coupon['points']);
+			}
+
+			$disabled = '';
+
+			if(!$coupon['active'])
+			{
+				$disabled = ' disabled="disabled"';
+			}
 
 			$coupon_list .= eval($templates->render('ougccouponrewards_row'));
 
 			$group = '';
 		}
 	}
-
-	$mybb->input['multiple'] = isset($mybb->input['multiple']) ? (int)$mybb->input['multiple'] : 1;
 
 	$groups = '';
 
@@ -639,9 +672,41 @@ function newpoints_start()
 		}
 	}
 
+	$stock_row = $groups_row = $points_row = $email_row = '';
+
+	if($mybb->settings['ougc_coupon_rewards_allow_stock'])
+	{
+		$stock_row = eval($templates->render('ougccouponrewards_row_stock'));
+	}
+
+	if($mybb->settings['ougc_coupon_rewards_allow_groups'])
+	{
+		$groups_row = eval($templates->render('ougccouponrewards_row_groups'));
+	}
+
+	if($mybb->settings['ougc_coupon_rewards_allow_points'])
+	{
+		$points_row = eval($templates->render('ougccouponrewards_row_points'));
+	}
+
+	if($mybb->settings['ougc_coupon_rewards_allow_email'])
+	{
+		$email_row = eval($templates->render('ougccouponrewards_row_email'));
+	}
+
 	$page = eval($templates->render('ougccouponrewards'));
 
 	output_page($page);
 
 	exit;
+}
+
+function modcp_start()
+{
+	if(function_exists('newpoints_format_points'))
+	{
+		return;
+	}
+
+	newpoints_start(true);
 }

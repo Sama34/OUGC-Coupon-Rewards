@@ -73,24 +73,30 @@ newpoints={$lang->setting_ougc_coupon_rewards_plugin_newpoints}",
 			'optionscode' => 'groupselect',
 			'value' =>	4,
 		],
-		'perpage' => [
-			'title' => $lang->setting_ougc_coupon_rewards_perpage,
-			'description' => $lang->setting_ougc_coupon_rewards_perpage_desc,
-			'optionscode' => 'numeric',
-			'value' =>	20,
+		'allow_stock' => [
+			'title' => $lang->setting_ougc_coupon_rewards_allow_stock,
+			'description' => $lang->setting_ougc_coupon_rewards_allow_stock_desc,
+			'optionscode' => 'yesno',
+			'value' =>	1,
 		],
-		'characters' => [
-			'title' => $lang->setting_ougc_coupon_rewards_characters,
-			'description' => $lang->setting_ougc_coupon_rewards_characters_desc,
-			'optionscode' => 'text',
-			'value' =>	'a-_bcdefghijklmnopqrstuvwxyz0123456789',
+		'allow_groups' => [
+			'title' => $lang->setting_ougc_coupon_rewards_allow_groups,
+			'description' => $lang->setting_ougc_coupon_rewards_allow_groups_desc,
+			'optionscode' => 'yesno',
+			'value' =>	1,
 		],
-		'length' => [
-			'title' => $lang->setting_ougc_coupon_rewards_length,
-			'description' => $lang->setting_ougc_coupon_rewards_length_desc,
-			'optionscode' => 'numeric',
-			'value' =>	20,
+		'allow_points' => [
+			'title' => $lang->setting_ougc_coupon_rewards_allow_points,
+			'description' => $lang->setting_ougc_coupon_rewards_allow_points_desc,
+			'optionscode' => 'yesno',
+			'value' =>	1,
 		],
+		'allow_email' => [
+			'title' => $lang->setting_ougc_coupon_rewards_allow_email,
+			'description' => $lang->setting_ougc_coupon_rewards_allow_email_desc,
+			'optionscode' => 'yesno',
+			'value' =>	1,
+		]
 	]);
 
 	// Add templates
@@ -224,12 +230,14 @@ function _db_tables()
 			'cid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
 			'title'			=> "varchar(150) NOT NULL DEFAULT ''",
 			'description'	=> "varchar(250) NOT NULL DEFAULT ''",
-			'code'			=> "varchar(50) NOT NULL DEFAULT ''",
+			'code'			=> "varchar(15) NOT NULL DEFAULT ''",
 			'stock'			=> "int NOT NULL DEFAULT '-1'",
 			'gid'			=> "int UNSIGNED NOT NULL DEFAULT '0'",
 			'type'			=> "int NOT NULL DEFAULT '1'",
 			'points'		=> "DECIMAL(16,2) NOT NULL DEFAULT '0'",
+			'email'			=> "varchar(250) NOT NULL DEFAULT ''",
 			'active'		=> "tinyint(5) NOT NULL DEFAULT '1'",
+			'dateline'		=> "int(10) NOT NULL DEFAULT '0'",
 			'primary_key'	=> "cid"
 		],
 		'ougc_coupon_rewards_logs'	=> [

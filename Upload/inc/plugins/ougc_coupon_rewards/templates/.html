@@ -1,23 +1,16 @@
 <html>
 	<head>
-		<title>{$mybb->settings['bbname']} - {$lang->newpoints} - {$lang->ougc_coupon_rewards_menu}</title>
+		<title>{$mybb->settings['bbname']} - {$page_title}</title>
 		{$headerinclude}
 	</head>
 	<body>
 		{$header}
 		<table width="100%" border="0" align="center">
 			<tr>
-				<td valign="top" width="180">
-					<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
-						<tr>
-							<td class="thead"><strong>{$lang->newpoints_menu}</strong></td>
-						</tr>
-						{$options}
-					</table>
-				</td>
+				{$navigation}
 				<td valign="top">
 					{$errors}
-					<form action="{$mybb->settings['bburl']}/newpoints.php" method="post">
+					<form action="{$mybb->settings['bburl']}/{$url}" method="post">
 						<input type="hidden" name="my_post_code" value="{$mybb->post_code}" />
 						<input type="hidden" name="action" value="coupons" />
 						<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
@@ -58,57 +51,10 @@
 									<input type="text" name="code" class="textbox" size="15" maxlength="15" value="{$code}" />
 								</td>
 							</tr>
-							<tr>
-								<td class="trow1">
-									<strong>{$lang->ougc_coupon_rewards_stock}:</strong>
-								</td>
-								<td class="trow1">
-									<input type="number" name="stock" class="textbox" value="{$stock}" min="1" max="999" />
-									<br />
-									<label>
-										<input type="checkbox" class="checkbox" name="unlimited_stock" value="1" {$unlimited_stock} />
-										{$lang->ougc_coupon_rewards_stock_unlimited}
-									</label>
-								</td>
-							</tr>
-							<tr>
-								<td class="trow1">
-									<strong>{$lang->ougc_coupon_rewards_group}:</strong>
-								</td>
-								<td class="trow1">
-									<select name="gid">
-										<option value="">{$lang->ougc_coupon_rewards_group_none}</option>
-										{$groups}
-									</select>
-									<label>
-										<input type="radio" class="radio" name="type" value="1"{$type1} />
-										{$lang->ougc_coupon_rewards_type_primary}
-									</label>
-									<label>
-										<input type="radio" class="radio" name="type" value="2"{$type2} />
-										{$lang->ougc_coupon_rewards_type_secondary}
-									</label>
-								</td>
-							</tr>
-							<tr>
-								<td class="trow1">
-									<strong>{$lang->ougc_coupon_rewards_points}:</strong>
-								</td>
-								<td class="trow1">
-									<input type="number" name="points" class="textbox" value="{$points}" min="0" max="99999" />
-								</td>
-							</tr>
-							<tr>
-								<td class="trow1">
-									<strong>{$lang->ougc_coupon_rewards_multiple}:</strong>
-									<div class="smalltext">
-										{$lang->ougc_coupon_rewards_multiple_desc}
-									</div>
-								</td>
-								<td class="trow1">
-									<input type="number" name="multiple" class="textbox" value="{$mybb->input['multiple']}" min="1" max="999">
-								</td>
-							</tr>
+							{$stock_row}
+							{$groups_row}
+							{$points_row}
+							{$email_row}
 						</table>
 						<br />
 						<div align="center">
@@ -116,50 +62,39 @@
 						</div>
 					</form>
 					<br />
-					<form action="{$mybb->settings['bburl']}/newpoints.php" method="post" id="list_form">
+					<form action="{$mybb->settings['bburl']}/{$url}" method="post">
 						<input type="hidden" name="my_post_code" value="{$mybb->post_code}" />
 						<input type="hidden" name="action" value="coupons" />
 						<input type="hidden" name="do" value="update" />
 						<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
 							<tr>
-								<td class="thead" colspan="7">
+								<td class="thead" colspan="8">
 									<strong>{$lang->ougc_coupon_rewards_list}</strong>
 									<div class="float_right smalltext">
-										<a href="{$mybb->settings['bburl']}/newpoints.php?action=coupons&amp;unactive=1">{$lang->ougc_coupon_rewards_success_unactive}</a>
+										<a href="{$mybb->settings['bburl']}/{$url}?action=coupons&amp;unactive=1">{$lang->ougc_coupon_rewards_success_unactive}</a>
 									</div>
 								</td>
 							</tr>
 							<tr>
 								<td class="tcat" width="20%"><strong>{$lang->ougc_coupon_rewards_title}</strong></td>
-								<td class="tcat" width="25%"><strong>{$lang->ougc_coupon_rewards_description}</strong></td>
-								<td class="tcat" width="20%" align="center"><strong>{$lang->ougc_coupon_rewards_code}</strong></td>
+								<td class="tcat" width="30%"><strong>{$lang->ougc_coupon_rewards_description}</strong></td>
+								<td class="tcat" width="15%" align="center"><strong>{$lang->ougc_coupon_rewards_code}</strong></td>
 								<td class="tcat" width="10%" align="center"><strong>{$lang->ougc_coupon_rewards_stock}</strong></td>
 								<td class="tcat" width="15%" align="center"><strong>{$lang->ougc_coupon_rewards_group}</strong></td>
 								<td class="tcat" width="10%" align="center"><strong>{$lang->ougc_coupon_rewards_points}</strong></td>
-								<td class="tcat" width="10%" align="center"><input type="checkbox" name="allbox" class="checkbox checkall"></td>
+								<td class="tcat" width="10%" align="center"><strong>{$lang->ougc_coupon_rewards_email}</strong></td>
+								<td class="tcat" width="10%" align="center"><input type="checkbox" name="allbox" class="checkbox checkall"{$disabled} /></td>
 							</tr>
 							{$coupon_list}
 						</table>
-						{$multipage}
 						<br />
 						<div align="center">
 							<input type="submit" class="button" name="submit" value="{$lang->ougc_coupon_rewards_deactivate}" />
-							<input type="submit" class="button" name="list" value="{$lang->ougc_coupon_rewards_list_button}" id="list_button" onclick="list_coupons(); return false;" />
 						</div>
 					</form>
 				</td>
 			</tr>
 		</table>
-		<script>
-			function list_coupons()
-			{
-				var x = $("#list_form").serialize();
-
-				MyBB.popupWindow("/{$url}" + x.replace('update', 'list'));
-
-				return false;
-			}
-		</script>
 		{$footer}
 	</body>
 </html>
