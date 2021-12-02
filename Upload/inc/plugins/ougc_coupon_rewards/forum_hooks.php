@@ -55,9 +55,11 @@ function newpoints_default_menu(&$menu)
 	if(is_member($mybb->settings['ougc_coupon_rewards_modgroups']))
 	{
 		\OUGCCouponRewards\Core\load_language();
-	
+
+		$url = 'newpoints.php';
+
 		$i = $mybb->get_input('action') == 'coupons' ? '&raquo; ' : '';
-	
+
 		$menu[] = eval($templates->render('ougccouponrewards_menu'));
 	}
 }
@@ -73,19 +75,27 @@ function pre_output_page(&$page)
 
 	\OUGCCouponRewards\Core\load_language();
 
+	$url = 'misc.php';
+
+	if(function_exists('newpoints_format_points'))
+	{
+		$url = 'newpoints.php';
+	}
+
 	$form = eval($templates->render('ougccouponrewards_form'));
 
 	$page = str_replace('<!--OUGC_COUPON_REWARDS_FORM-->', $form, $page);
 }
 
-function misc_start()
+function misc_start($isNewpoints=false)
 {
 	global $mybb, $db, $lang, $theme, $header, $templates, $headerinclude, $footer, $options, $cache;
 
 	if(
 		$mybb->get_input('action') != 'coupons' ||
 		$mybb->get_input('do', \MyBB::INPUT_STRING) != 'exchange' ||
-		$mybb->request_method != 'post'
+		$mybb->request_method != 'post' ||
+		($isNewpoints && constant('THIS_SCRIPT') == 'misc.php')
 	)
 	{
 		return;
@@ -118,6 +128,8 @@ function misc_start()
 	}
 	else
 	{
+		$navigation = eval($templates->render('ougccouponrewards_navigation'));
+
 		$page_title = "{$lang->newpoints} - {$lang->ougc_coupon_rewards_page_title}";
 	}
 
@@ -167,7 +179,7 @@ function misc_start()
 	{
 		if(my_strtolower(trim($mybb->user['email'])) != my_strtolower(trim($coupon['email'])))
 		{
-			error($lang->ougc_coupon_rewards_error_email);
+			error($lang->ougc_coupon_rewards_error_code);
 		}
 	}
 
@@ -320,6 +332,11 @@ function misc_start()
 	exit;
 }
 
+function newpoints_start10()
+{
+	misc_start(true);
+}
+
 function newpoints_start($modcp=false)
 {
 	global $mybb, $db, $lang, $theme, $header, $templates, $headerinclude, $footer, $options, $cache;
@@ -446,7 +463,7 @@ function newpoints_start($modcp=false)
 
 		if($mybb->settings['ougc_coupon_rewards_allow_email'])
 		{
-			if(!validate_email_format(my_strtolower($mybb->get_input('email'))))
+			if($mybb->get_input('email') && !validate_email_format(my_strtolower($mybb->get_input('email'))))
 			{
 				$errors[] = $lang->ougc_coupon_rewards_error_email;
 			}

@@ -52,7 +52,6 @@ $l = [
 	'ougc_coupon_rewards_error_title' => 'Invalid title supplied.',
 	'ougc_coupon_rewards_error_description' => 'Invalid description supplied.',
 	'ougc_coupon_rewards_error_code' => 'Invalid code supplied.',
-	'ougc_coupon_rewards_error_email' => 'Invalid code supplied.', // we are hiding the existence of this code
 	'ougc_coupon_rewards_error_duplicated' => 'The selected code is duplicated.',
 	'ougc_coupon_rewards_error_repeated' => 'You have already exchanged this coupon.',
 	'ougc_coupon_rewards_error_group' => 'The selected group is invalid.',
